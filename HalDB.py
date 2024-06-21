@@ -29,7 +29,7 @@ def create_project_table(cursor):
                        Date_creation VARCHAR(255),
                        Date_update VARCHAR(255),
                        Domain TEXT,
-                       Stars VARCHAR(255)
+                       OnGithub BOOLEAN
                    )''')
     
 def create_author_table(cursor):
@@ -293,19 +293,20 @@ def insert_projects(cursor, projects, projects_github):
         date_creation = project.get('date', '')
         date_update = project.get('submitted_date', '')
         domain = project.get('domain', '')
-
+        onGithub = True
         # Extraire le nombre d'étoiles du projet GitHub correspondant
         github_info = next((item for item in projects_github if item['title'] == title), None)
-        if github_info:
-            stars = github_info.get('repo_info', {}).get('stars', "None")
-        else:
-            stars = "None"
+
+        #mettre onGithub à False si le projet n'est pas sur github
+        stars = github_info.get('repo_info', {}).get('stars', "None")
+        if stars != "None":
+            onGithub = False
 
         # Requête SQL pour insérer les données
         insert_query = '''INSERT INTO Project 
-                          (Hal_Id, Title, Abstract, Date_creation, Date_update, Domain, Stars) 
+                          (Hal_Id, Title, Abstract, Date_creation, Date_update, Domain, OnGithub) 
                           VALUES (%s, %s, %s, %s, %s, %s, %s)'''
-        cursor.execute(insert_query, (hal_id, title, abstract, date_creation, date_update, domain, stars))
+        cursor.execute(insert_query, (hal_id, title, abstract, date_creation, date_update, domain, onGithub))
 
         # Récupérer l'ID du projet inséré pour les relations many-to-many
         Project_Id = cursor.lastrowid
@@ -740,21 +741,21 @@ def insert_project_github_relations(cursor, projects, projects_github):
         project_result = cursor.fetchone()
         cursor.fetchall()
         if not project_result:
-            print(f"Projet '{title}' non trouvé dans la table Project.")
+            #print(f"Projet '{title}' non trouvé dans la table Project.")
             continue
         project_id = project_result[0]
 
         # Récupérer l'ID du projet GitHub depuis la table Github
         github_info = next((item for item in projects_github if item['title'] == title), None)
         if not github_info or 'repo_info' not in github_info:
-            print(f"Projet GitHub pour '{title}' non trouvé ou sans informations dans les projets GitHub.")
+            #print(f"Projet GitHub pour '{title}' non trouvé ou sans informations dans les projets GitHub.")
             continue
 
         cursor.execute("SELECT Github_Id FROM Github WHERE Full_Name = %s", (github_info['repo_info']['full_name'],))
         github_result = cursor.fetchone()
         cursor.fetchall()
         if not github_result:
-            print(f"Dépôt GitHub '{github_info['repo_info']['full_name']}' non trouvé dans la table Github.")
+            #print(f"Dépôt GitHub '{github_info['repo_info']['full_name']}' non trouvé dans la table Github.")
             continue
         github_id = github_result[0]
 
@@ -881,18 +882,14 @@ def fill_database(projects,project_github, db_config):
     print("Données insérées avec succès dans la base de données.")
 
 def main():
-    #Mettre les bons chemins vers les fichiers JSON
     json_file_hal = 'CNRS_HAL.json' 
     json_file_github = '../Git/CNRS_GITHUB.json'
-
-    #Mettre les informations de connexion à la base de données MySQL installée sur votre machine
     db_config = {
         'host': 'localhost',
         'user': 'mouahid',
         'password': 'MdpSQL',
         'database': 'cnrs_hal_db'
     }
-    
     data_hal = load_json_data(json_file_hal)
     projects = data_hal.get('projects', [])
 
