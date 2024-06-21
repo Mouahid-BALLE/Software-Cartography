@@ -54,7 +54,8 @@ python HalJSON.py
 ```
 **Récupération des données GitHub**
 
-Créez une instance de GitHalJSON avec votre jeton GitHub personnel.
+Créez une instance de GitHalJSON avec votre token GitHub personnel.
+Mon token disponible dans le code ne fonctionne plus il faut le remplacer par le votre( voir section token d'acces plus bas).
 
 Exécutez le script python GitHalJSON.py :
 
@@ -115,7 +116,6 @@ python HalDB.py
 **Tokens d'accès**
 
 Pour accéder aux données des API GitHub, vous pouvez avoir besoin de tokens d'accès pour respecter les limites de taux et garantir un accès continu. Vous pouvez le récupérer directement sur [Github](https://github.com/settings/tokens) et configurer les tokens d'accès dans les appels d'API au besoin.
-
 
 
 
