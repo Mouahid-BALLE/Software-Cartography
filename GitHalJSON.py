@@ -156,7 +156,7 @@ def main():
         projects_data = json.load(f)
 
     # Créer une instance de GitHubRepoInfoCollector avec votre jeton GitHub personnel
-    github_collector = GitHubRepoInfoCollector(token="YOUR_GITHUB_TOKEN")
+    github_collector = GitHubRepoInfoCollector(token="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")
 
     # Traiter les projets et récupérer les informations GitHub
     results = github_collector.process_projects(projects_data["projects"])
