@@ -31,8 +31,8 @@ pip install mysql-connector-python requests
 Clonez ce dépôt sur votre machine locale :
 
 ```bash
-git clone <URL_du_depot>
-cd <nom_du_depot>
+git clone https://github.com/Mouahid-BALLE/Software-Cartography
+cd Software-Cartography
 ```
 
 
