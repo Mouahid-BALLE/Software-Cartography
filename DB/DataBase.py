@@ -1,23 +1,47 @@
 import json
 import mysql.connector
 
+""" Classe pour gérer la connexion à la base de données et insérer les données. 
+    Les données sont insérées dans la base de données en utilisant des requêtes SQL.
+    Il y a 2 fichier d'entrée JSON : CNRS_PROJ.json et CNRS_PROJ_GITHUB_INFO.json
+    Le premier fichier contient les informations des projets provenant de Hal, SH ou Github.
+    Le deuxième fichier contient les informations des projets GitHub."""
+
 class DatabaseManager:
     def __init__(self, db_config):
+        """
+        Initialise la classe avec la configuration de la base de données.
+        Args:
+            db_config (dict): Configuration de la base de données.
+        """
         self.db_config = db_config
         self.conn = None
         self.cursor = None
 
     def connect(self):
+        """
+        Établit une connexion à la base de données.
+        """
         self.conn = mysql.connector.connect(**self.db_config)
         self.cursor = self.conn.cursor()
 
     def close(self):
+        """
+        Ferme la connexion à la base de données.
+        """
         if self.cursor:
             self.cursor.close()
         if self.conn:
             self.conn.close()
 
     def load_json_data(self, json_file):
+        """
+        Charge les données à partir d'un fichier JSON.
+        Args:
+            json_file (str): Chemin du fichier JSON.
+        Returns:
+            dict: Données chargées du fichier JSON.
+        """
         with open(json_file, 'r', encoding='utf-8') as f:
             return json.load(f)
 
@@ -851,14 +875,29 @@ class DatabaseManager:
             """, (Project_Id, institution_id))
 
     def create_database(self, db_name):
+        """
+        Crée une base de données si elle n'existe pas déjà.
+        Args:
+            db_name (str): Nom de la base de données à créer.
+        """
         self.cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
         self.cursor.execute(f"USE {db_name}")
 
     def drop_database_if_exists(self, db_name):
+        """
+        Supprime une base de données si elle existe.
+        Args:
+            db_name (str): Nom de la base de données à supprimer.
+        """
         self.cursor.execute(f"DROP DATABASE IF EXISTS {db_name}")
 
     def fill_database(self, projects, projects_github):
-
+        """
+        Remplit la base de données avec les données des projets.
+        Args:
+            projects (list): Liste des projets HAL.
+            projects_github (list): Liste des projets GitHub.
+        """
         self.create_project_table()
         self.insert_projects(projects, projects_github)
 
@@ -889,7 +928,7 @@ class DatabaseManager:
         self.create_project_author_table()
         self.insert_project_authors(projects)
 
-        self.create_project_lab_table() 
+        self.create_project_lab_table()
         self.insert_project_labs(projects)
 
         self.create_project_forge_table()
@@ -911,10 +950,15 @@ class DatabaseManager:
         self.insert_project_institutions(projects)
 
         self.conn.commit()
-        
         print("Données insérées avec succès dans la base de données.")
 
     def complete_database(self, projects, projects_github):
+        """
+        Complète la base de données avec des données supplémentaires.
+        Args:
+            projects (list): Liste des projets HAL.
+            projects_github (list): Liste des projets GitHub.
+        """
         self.insert_projects(projects, projects_github)
         self.insert_authors(projects)
         self.insert_forges(projects)
@@ -933,11 +977,14 @@ class DatabaseManager:
         self.insert_project_github_relations(projects, projects_github)
         self.insert_project_institutions(projects)
         self.conn.commit()
-
         print("Données rajoutées avec succès dans la base de données.")
 
 def main():
-    json_file_hal = 'CNRS_HAL_GITMOD1.json' 
+    """
+    Fonction principale pour charger les fichiers JSON, connecter à la base de données, 
+    supprimer et créer la base de données, puis remplir la base de données avec les données des projets.
+    """
+    json_file_hal = 'CNRS_HAL_GITMOD1.json'
     json_file_github = 'CNRS_HAL_GITHUB_GITMOD1.json'
     db_config = {
         'host': 'localhost',
