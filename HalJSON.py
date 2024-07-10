@@ -3,6 +3,9 @@ import re
 import json
 from itertools import zip_longest
 
+
+""" Crée le fichier CNRS_HAL.json qui contients les logiciels du CNRS sur HAL"""
+
 def search_hal_projects(collection, doc_type, start=0, rows=1000):
     """
     Recherche les projets HAL en fonction de la collection et du type de document.
@@ -17,7 +20,7 @@ def search_hal_projects(collection, doc_type, start=0, rows=1000):
     Returns:
         list: Liste des projets trouvés dans la réponse de l'API.
     """
-    fields = "title_s,authFullName_s,authIdHal_s,authIdHal_i,producedDate_s,submittedDate_s,docType_s,labStructName_s,fr_domainAllCodeLabel_fs,abstract_s,keyword_s,halId_s,structName_s,language_s,swhidId_s,softCodeRepository_s,softProgrammingLanguage_s"
+    fields = "title_s,authFullName_s,authIdHal_s,authIdHal_i,producedDate_s,submittedDate_s,docType_s,labStructName_s,fr_domainAllCodeLabel_fs,abstract_s,keyword_s,halId_s,structName_s,language_s,swhidId_s,softCodeRepository_s,softProgrammingLanguage_s,rgrpInstStructName_s"
     search_url = f"https://api.archives-ouvertes.fr/search/?q=collCode_s:{collection}+AND+docType_s:{doc_type}&start={start}&rows={rows}&fl={fields}"
     try:
         response = requests.get(search_url)
@@ -59,6 +62,8 @@ def collect_hal_data(collection, doc_type):
         authors = project.get('authFullName_s', [])
         author_auth = project.get('authIdHal_s', [])
         author_id = project.get('authIdHal_i', [])
+        # appliquer ca à softProgrammingLanguage ", ".join(repo.get("topics", [])) if repo.get("topics") else ""
+        programmingLanguage = ", ".join(project.get('softProgrammingLanguage_s', [])) if project.get('softProgrammingLanguage_s') else ""
         
         authors_with_ids = [
             {
@@ -72,8 +77,8 @@ def collect_hal_data(collection, doc_type):
         project_info = {
             'title': project.get('title_s', [''])[0],
             'authors': authors_with_ids,
-            'date': project.get('producedDate_s', ''),
-            'submitted_date': project.get('submittedDate_s', ''),
+            'submitted_date': project.get('producedDate_s', ''),
+            'updated_date': project.get('submittedDate_s', ''),
             'type': project.get('docType_s', ''),
             'laboratory': project.get('labStructName_s', [''])[0],
             'domain': ", ".join(cleaned_domains),
@@ -87,7 +92,8 @@ def collect_hal_data(collection, doc_type):
             'softCodeRepository_sh': repo_sh.group(1) if repo_sh else '',
             'forge': repo.split('//')[-1].split('/')[0] if repo else '',
             'softProgrammingLanguage': project.get('softProgrammingLanguage_s', ''),
-            'source': 'HAL' 
+            'source': 'HAL',
+            'institution': ", ".join(project.get('rgrpInstStructName_s', [])),
         }
         if swhid:
             categorized_projects["with_swhid"].append(project_info)
@@ -144,12 +150,12 @@ def main():
     """
     collection, doc_type = 'CNRS', 'SOFTWARE'
     projects = collect_hal_data(collection, doc_type)
-    save_json(projects["with_swhid"], 'CNRS_SWHID.json')
-    save_json(projects["with_repo"], 'CNRS_REPO.json')
-    save_json(projects["without_swhid_and_repo"], 'CNRS_AUTRE.json')
+    save_json(projects["with_swhid"], 'CNRS_HAL_SWHID.json')
+    save_json(projects["with_repo"], 'CNRS_HAL_REPO.json')
+    save_json(projects["without_swhid_and_repo"], 'CNRS_HAL_AUTRE.json')
 
     #utilisation de la fonction merge_json_files pour fusionner les fichiers JSON en un seul fichier
-    json_files = ['CNRS_SWHID.json', 'CNRS_REPO.json']
+    json_files = ['CNRS_HAL_SWHID.json', 'CNRS_HAL_REPO.json']
     merge_json_files(json_files, 'CNRS_HAL.json')
 
 if __name__ == "__main__":
