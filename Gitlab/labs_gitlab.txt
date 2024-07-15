@@ -1,0 +1,5 @@
+artois : https://gitlab.univ-artois.fr
+lipn : https://depot.lipn.univ-paris13.fr
+inria : https://gitlab.inria.fr
+lirmm : https://gite.lirmm.fr
+univ nantes : https://gitlab.univ-nantes.fr
