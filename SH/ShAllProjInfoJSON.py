@@ -4,20 +4,26 @@ import json
 import os
 import time
 
+# Description : Ce script récupère les informations détaillées des projets archivés sur Software Heritage
+# en utilisant l'API Software Heritage. Le script prend en entrée un fichier JSON contenant une liste
+# d'URLs de projets (input_file), fichier renvoyé par le script "ShAllProjJSON.py". Pour chaque URL, il extrait 
+# des informations sur les visites, les snapshots, et les révisions associées. Ces informations sont ensuite structurées
+# et sauvegardées dans un fichier JSON de sortie (output_file). Ce fichier de sortie contient les détails des projets, 
+# tels que le titre, les auteurs, l'identifiant du projet sur Software Heritage, la date de soumission, la date de mise à jour, etc. 
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Function to get the latest visit information of a repository
 def get_last_visit_info(origin_url, headers):
     """
-    Get the latest visit information of a repository.
-    
+    Récupère les informations de la dernière visite d'un dépôt.
+
     Args:
-        origin_url: URL of the repository.
-        headers: HTTP headers with authorization token.
-        
+        origin_url (str): URL du dépôt.
+        headers (dict): En-têtes HTTP avec le token d'autorisation.
+
     Returns:
-        JSON response with the latest visit information or None if an error occurs.
+        dict: Réponse JSON contenant les informations de la dernière visite ou None en cas d'erreur.
     """
     url_latest_visit = f"https://archive.softwareheritage.org/api/1/origin/{origin_url}/visit/latest/"
     while True:
@@ -25,23 +31,22 @@ def get_last_visit_info(origin_url, headers):
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 429:
-            logging.error(f"Error 429: Rate limit exceeded. Waiting 60 seconds before retrying...")
+            logging.error(f"Erreur 429 : Limite de taux dépassée. Attente de 60 secondes avant de réessayer...")
             time.sleep(60)
         else:
-            logging.error(f"Error {response.status_code} when retrieving the latest visit.")
+            logging.error(f"Erreur {response.status_code} lors de la récupération de la dernière visite.")
             return None
 
-# Function to get snapshot information
 def get_snapshot_info(snapshot_id, headers):
     """
-    Get snapshot information.
-    
+    Récupère les informations du snapshot.
+
     Args:
-        snapshot_id: ID of the snapshot.
-        headers: HTTP headers with authorization token.
-        
+        snapshot_id (str): ID du snapshot.
+        headers (dict): En-têtes HTTP avec le token d'autorisation.
+
     Returns:
-        JSON response with the snapshot information or None if an error occurs.
+        dict: Réponse JSON contenant les informations du snapshot ou None en cas d'erreur.
     """
     url_snapshot = f"https://archive.softwareheritage.org/api/1/snapshot/{snapshot_id}/"
     while True:
@@ -49,23 +54,22 @@ def get_snapshot_info(snapshot_id, headers):
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 429:
-            logging.error(f"Error 429: Rate limit exceeded. Waiting 60 seconds before retrying...")
+            logging.error(f"Erreur 429 : Limite de taux dépassée. Attente de 60 secondes avant de réessayer...")
             time.sleep(60)
         else:
-            logging.error(f"Error {response.status_code} when retrieving the snapshot.")
+            logging.error(f"Erreur {response.status_code} lors de la récupération du snapshot.")
             return None
 
-# Function to get revision information
 def get_revision_info(revision_id, headers):
     """
-    Get revision information.
-    
+    Récupère les informations de la révision.
+
     Args:
-        revision_id: ID of the revision.
-        headers: HTTP headers with authorization token.
-        
+        revision_id (str): ID de la révision.
+        headers (dict): En-têtes HTTP avec le token d'autorisation.
+
     Returns:
-        JSON response with the revision information or None if an error occurs.
+        dict: Réponse JSON contenant les informations de la révision ou None en cas d'erreur.
     """
     url_revision = f"https://archive.softwareheritage.org/api/1/revision/{revision_id}/"
     while True:
@@ -73,23 +77,22 @@ def get_revision_info(revision_id, headers):
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 429:
-            logging.error(f"Error 429: Rate limit exceeded. Waiting 60 seconds before retrying...")
+            logging.error(f"Erreur 429 : Limite de taux dépassée. Attente de 60 secondes avant de réessayer...")
             time.sleep(60)
         else:
-            logging.error(f"Error {response.status_code} when retrieving the revision.")
+            logging.error(f"Erreur {response.status_code} lors de la récupération de la révision.")
             return None
 
-# Function to get detailed information about a project
 def get_project_info(origin_url, headers):
     """
-    Get detailed information about a project.
-    
+    Récupère les informations détaillées sur un projet.
+
     Args:
-        origin_url: URL of the project repository.
-        headers: HTTP headers with authorization token.
-        
+        origin_url (str): URL du dépôt du projet.
+        headers (dict): En-têtes HTTP avec le token d'autorisation.
+
     Returns:
-        Dictionary with detailed project information.
+        dict: Dictionnaire contenant les informations détaillées du projet.
     """
     visit_info = get_last_visit_info(origin_url, headers)
     if not visit_info:
@@ -139,40 +142,40 @@ def get_project_info(origin_url, headers):
 
 def main(input_file, output_file, token):
     """
-    Main function to fetch project data and save it to a JSON file.
-    
+    Fonction principale pour récupérer les données de projets et les sauvegarder dans un fichier JSON.
+
     Args:
-        input_file: Path to the input JSON file with project URLs.
-        output_file: Path to the output JSON file to save project information.
-        token: Authorization token for the Software Heritage API.
+        input_file (str): Chemin vers le fichier JSON d'entrée contenant les URLs des projets.
+        output_file (str): Chemin vers le fichier JSON de sortie pour sauvegarder les informations des projets.
+        token (str): Token d'autorisation pour l'API Software Heritage.
     """
     headers = {"Authorization": f"Bearer {token}"}
     
-    # Load the input file
+    # Charger le fichier d'entrée
     try:
         with open(input_file, "r", encoding='utf-8') as file:
             input_data = json.load(file)
             projects = input_data.get("projects", [])
-            logging.info(f"{len(projects)} projects loaded from input file.")
+            logging.info(f"{len(projects)} projets chargés depuis le fichier d'entrée.")
     except FileNotFoundError:
-        logging.error(f"Input file {input_file} not found.")
+        logging.error(f"Fichier d'entrée {input_file} introuvable.")
         return
     
-    # Load existing output file if it exists
+    # Charger le fichier de sortie existant s'il existe
     if os.path.exists(output_file):
         try:
             with open(output_file, "r", encoding='utf-8') as file:
                 structured_data = json.load(file)
                 existing_urls = {project["softCodeRepository"] for project in structured_data["projects"]}
         except json.JSONDecodeError:
-            logging.error("Error decoding output file, starting with a new file")
+            logging.error("Erreur lors du décodage du fichier de sortie, démarrage avec un nouveau fichier.")
             structured_data = {"number_of_projects": 0, "projects": []}
             existing_urls = set()
     else:
         structured_data = {"number_of_projects": 0, "projects": []}
         existing_urls = set()
 
-    # Process each project in the input file
+    # Traiter chaque projet dans le fichier d'entrée
     for project in projects:
         origin_url = project.get("url", "N/A")
         if origin_url in existing_urls or origin_url == "N/A":
@@ -183,15 +186,15 @@ def main(input_file, output_file, token):
             structured_data["projects"].append(project_info)
             structured_data["number_of_projects"] += 1
 
-            # Save output file after each project
+            # Sauvegarder le fichier de sortie après chaque projet
             with open(output_file, "w", encoding='utf-8') as file:
                 json.dump(structured_data, file, ensure_ascii=False, indent=4)
-            logging.info(f"Project {project_info['title']} added to output file.")
+            logging.info(f"Projet {project_info['title']} ajouté au fichier de sortie.")
 
-    logging.info(f"Structured data saved in {output_file}")
+    logging.info(f"Données structurées sauvegardées dans {output_file}")
 
 if __name__ == "__main__":
     input_file = "SH_CNRS_PROJ.json" 
     output_file = "SH_CNRS.json"  
-    token = "YOUR_PERSONAL_SH_TOKEN"
+    token = "your_token_here"
     main(input_file, output_file, token)

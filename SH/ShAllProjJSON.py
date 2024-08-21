@@ -3,23 +3,45 @@ import time
 import json
 from urllib.parse import urljoin
 
-def fetch_all_data(token):
-    state_file = "fetch_state.json"  # Nom du fichier d'état
-    base_url = "https://archive.softwareheritage.org/api/1/origin/search/cnrs/"
-    headers = {"Authorization": f"Bearer {token}"}
-    all_data = []
-    params = {'per_page': 2}
+# Description : Ce script récupère les données de projets depuis l'API Software Heritage en utilisant la pagination.
+# Les données sont structurées et sauvegardées dans un fichier JSON pour une analyse ultérieure.
 
-    # Vérifier si le fichier d'état existe et charger l'état
+def fetch_all_data(token):
+    """
+    Récupère toutes les données de projets en utilisant l'API Software Heritage avec pagination.
+    Si un état de récupération existe, il reprend à partir de l'URL sauvegardée.
+    
+    Args:
+        token (str): Token d'autorisation pour accéder à l'API Software Heritage.
+
+    Returns:
+        list: Liste des données de projets récupérées.
+    """
+    state_file = "fetch_state.json"  # Fichier pour stocker l'état afin de reprendre le processus de récupération
+    base_url = "https://archive.softwareheritage.org/api/1/origin/search/cnrs/"
+    headers = {"Authorization": f"Bearer {token}"}  # En-tête d'autorisation avec le token fourni
+    all_data = []
+    params = {'per_page': 2}  # Ajuster le nombre d'éléments par page
+
+    # Charger l'état si le fichier existe pour reprendre la récupération
     try:
         with open(state_file, "r") as file:
             state = json.load(file)
-            base_url = state["next_url"]  # URL de la prochaine page à traiter
-            all_data = state["data"]  # Données déjà récupérées
+            base_url = state["next_url"]  # Reprendre à partir de l'URL suivante
+            all_data = state["data"]  # Charger les données déjà récupérées
     except FileNotFoundError:
         print("Aucun fichier d'état trouvé, démarrage d'une nouvelle récupération.")
 
     def get_next_page_link(headers):
+        """
+        Extrait l'URL de la page suivante à partir des en-têtes de la réponse API.
+
+        Args:
+            headers (dict): En-têtes de la réponse HTTP.
+
+        Returns:
+            str: URL de la page suivante ou None si elle n'existe pas.
+        """
         link_header = headers.get('Link', '')
         links = [link.split(';') for link in link_header.split(',')]
         next_link = [link for link in links if len(link) > 1 and 'rel="next"' in link[1]]
@@ -28,12 +50,18 @@ def fetch_all_data(token):
         return None
 
     def handle_rate_limiting(headers):
+        """
+        Gère la limitation de taux imposée par l'API en calculant le temps d'attente nécessaire avant de poursuivre.
+
+        Args:
+            headers (dict): En-têtes de la réponse HTTP.
+        """
         remaining = int(headers.get('X-RateLimit-Remaining', 0))
         reset_time = int(headers.get('X-RateLimit-Reset', 0))
         if remaining == 0:
             sleep_time = reset_time - int(time.time()) + 1
             if sleep_time > 0:
-                print(f"Rate limit reached. Sleeping for {sleep_time} seconds.")
+                print(f"Limite de taux atteinte. Attente de {sleep_time} secondes.")
                 time.sleep(sleep_time)
 
     while True:
@@ -49,7 +77,7 @@ def fetch_all_data(token):
             base_url = urljoin(base_url, next_page_url)
             params = {}
 
-            # Sauvegarder l'état après chaque page traitée
+            # Sauvegarder l'état après le traitement de chaque page
             with open(state_file, "w") as file:
                 json.dump({"next_url": base_url, "data": all_data}, file)
 
@@ -64,8 +92,16 @@ def fetch_all_data(token):
 
     return all_data
 
-# Transforme les données en un format structuré avec les clés appropriées
 def structure_data(data):
+    """
+    Transforme les données brutes récupérées en un format structuré avec des clés spécifiques.
+
+    Args:
+        data (list): Liste des données brutes de projets récupérées.
+
+    Returns:
+        dict: Données structurées avec des informations détaillées sur chaque projet.
+    """
     structured_data = {"number_of_projects": len(data), "projects": []}
     for i, item in enumerate(data, start=1):
         project_info = {
@@ -79,13 +115,13 @@ def structure_data(data):
         structured_data["projects"].append(project_info)
     return structured_data
 
-# Utilisez votre token ici
-token = "YOUR_PERSONAL_SH_TOKEN"
+# Utilisez votre token ici - TOKEN SUPPRIMÉ POUR DES RAISONS DE SÉCURITÉ
+token = "your_token_here"
 data = fetch_all_data(token)
 structured_data = structure_data(data)
 
-# Enregistrer les données structurées dans un fichier JSON
-output_file = "structured_data_cnrs.json"
+# Sauvegarder les données structurées dans un fichier JSON
+output_file = "SH_CNRS_PROJ.json"
 with open(output_file, "w") as file:
     json.dump(structured_data, file, indent=2)
 
