@@ -1,133 +1,69 @@
-# Cartographie des Logiciels Open Source du CNRS
+# CNRS Software Cartography
 
-Ce projet vise à construire une cartographie des logiciels open sources issus du CNRS, ou des logiciels auxquels des chercheurs du CNRS contribuent. Les sources d'information utilisées sont GitHub, Software Heritage et HAL. Cette cartographie met en évidence :
+## Description
 
-- L’ensemble des logiciels concernés
-- Une répartition par unité de recherche
-- Les logiciels les plus visibles (nombre de « stars » par exemple)
-- Les thématiques les plus représentées
+Ce projet vise à créer une cartographie des logiciels open source développés ou soutenus par le CNRS. Il s'appuie sur des données collectées à partir des API de GitHub, GitLab, Software Heritage, et HAL pour analyser et visualiser les contributions des chercheurs du CNRS.
+
+## Structure du Projet
+
+Le projet est organisé en plusieurs dossiers, chacun dédié à une tâche spécifique :
+
+### 1. `hal/`
+Le dossier `hal/` est dédié à la collecte des projets CNRS présents sur la plateforme **HAL (Hyper Article en Ligne)**. Les scripts permettent d'extraire les informations des projets, de les organiser en catégories, et de les sauvegarder sous forme de fichiers JSON.
+
+### 2. `sh/`
+Ce dossier contient les scripts utilisés pour collecter les informations des projets depuis la forge **Software Heritage (SH)**. Les données des projets sont récupérées et structurées dans des fichiers JSON pour une analyse ultérieure.
+
+### 3. `gitlab/`
+Le dossier `gitlab/` contient des scripts qui permettent de collecter les informations des projets hébergés sur **GitLab**, ainsi que les contenus des fichiers README associés. Les données sont ensuite enregistrées dans des fichiers JSON.
+
+### 4. `github/`
+Ce dossier est similaire à celui de GitLab, mais pour la plateforme **GitHub**. Les scripts récupèrent les informations des projets GitHub, extraient les contenus des fichiers README, et les sauvegardent dans des fichiers JSON.
+
+### 5. `ext/`
+Le dossier `ext/` est utilisé pour collecter les informations des projets externes provenant de sources non répertoriées dans les autres dossiers. Le script lit des fichiers texte contenant les URLs des projets et génère des fichiers JSON structurés.
+
+### 6. `readme/`
+Le dossier `readme/` contient des scripts dédiés à l'extraction et à l'analyse des fichiers README et des abstracts des projets afin d'obtenir leur domaine scientifique.
+
+### 7. `db/`
+Ce dossier contient des scripts qui interagissent directement avec une base de données MySQL. Ils permettent de centraliser les données collectées depuis différentes sources (GitHub, GitLab, SH, HAL, etc.), de les fusionner dans une base de données, puis de les exporter pour une analyse plus approfondie. Ce dossier inclut également des scripts pour générer des graphiques et des fichiers CSV à partir des données stockées.
 
 ## Prérequis
+
 - Python 3.x
-- [MySQL](https://dev.mysql.com/downloads/installer/)
-
-## Packages et Bibliothèques
-
-Les bibliothèques Python suivantes sont nécessaires pour exécuter ce script :
-
-- mysql-connector-python
-- requests
-- re
-- json
-
-Pour installer les packages nécessaires, utilisez [pip](https://pip.pypa.io/en/stable/) :
-
-```bash
-pip install mysql-connector-python requests
-```
+- MySQL pour la gestion de la base de données
+- Bibliothèques Python nécessaires (voir `requirements.txt`)
+- Accès à des clés API pour GitHub et Software Heritage
 
 ## Installation
 
-Clonez ce dépôt sur votre machine locale :
+1. Clonez ce dépôt :
 
-```bash
-git clone https://github.com/Mouahid-BALLE/Software-Cartography
-cd Software-Cartography
-```
+    ```bash
+    git clone https://github.com/Mouahid-BALLE/Software-Cartography
+    cd Software-Cartography
+    ```
 
+2. Installez les dépendances Python :
 
-## Configuration
-
-Créez un fichier JSON pour les données de HAL (par exemple, CNRS_HAL.json) et un autre pour les données GitHub (par exemple, CNRS_GITHUB.json).
-
-Configurez les informations de connexion à la base de données MySQL dans la section db_config du script.
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 ## Utilisation
 
-**Récupération des données HAL**
+1. **Configuration** :
+    - Mettez à jour les fichiers de configuration avec vos clés API et vos informations MySQL.
 
-Créez un fichier JSON pour stocker les données HAL.
+2. **Collecte des Données** :
+    - Exécutez les scripts présents dans les dossiers `hal/`, `sh/`, `gitlab/`, `github/`, et `ext/` pour collecter les données depuis les différentes sources.
+    - Les scripts se connectent aux APIs des forges, récupèrent les informations des projets, et les sauvegardent sous forme de fichiers JSON.
 
-Exécutez le script 
-```bash
-python HalJSON.py
-```
-**Récupération des données GitHub**
+3. **Fusion des Données** :
+    - Utilisez les scripts du dossier `db/` pour centraliser et fusionner les données collectées dans une base de données MySQL.
+    - Les scripts permettent également d'exporter ces données sous forme de fichiers CSV ou de générer des rapports graphiques pour une analyse plus approfondie.
 
-Créez une instance de GitHalJSON avec votre token GitHub personnel.
-Mon token disponible dans le code ne fonctionne plus il faut le remplacer par le votre( voir section token d'acces plus bas).
+## Remerciements
 
-Exécutez le script python GitHalJSON.py :
-
-```bash
-python GitHalJSON.py
-```
-Assurez-vous que ces fichiers JSON suivent la structure attendue par le script. Exemple de structure pour CNRS_GITHUB.json :
-```json
-{
-    "projects": [
-        {
-            "project_number": 3,
-            "title": "Marcelle",
-            "repo_source": "softCodeRepository",
-            "repo_url": "https://github.com/marcellejs/marcelle/",
-            "repo_info": {
-                "name": "marcelle",
-                "full_name": "marcellejs/marcelle",
-                "description": "An Interactive Machine Learning Toolkit",
-                "stars": 43,
-                "forks": 7,
-                "owner": "marcellejs",
-                "watchers": 43,
-                "open_issues": 5,
-                "contributors_url": "https://api.github.com/repos/marcellejs/marcelle/contributors",
-                "pulls_url": "https://api.github.com/repos/marcellejs/marcelle/pulls{/number}",
-                "commits_url": "https://api.github.com/repos/marcellejs/marcelle/commits{/sha}",
-                "releases_url": "https://api.github.com/repos/marcellejs/marcelle/releases{/id}",
-                "language": "TypeScript",
-                "created_at": "2020-06-26T13:37:00Z",
-                "updated_at": "2024-05-15T09:03:05Z",
-                "pushed_at": "2024-06-14T20:21:31Z",
-                "homepage": "https://marcelle.dev",
-                "repo_url": "https://github.com/marcellejs/marcelle"
-            }
-        }
-    ]
-}
-```
-
-**Création et Remplissage de la Base de Données**
-
-Configurez les informations de connexion à la base de données MySQL dans la section db_config du script HalDB.py :
-```bash
-db_config = {
-     'host': 'localhost',
-     'user': 'mouahid',
-     'password': 'MonMdp',
-     'database': 'cnrs_hal_db'
-}
-```
-Exécutez le script principal pour créer et remplir la base de données :
-
-```bash
-python HalDB.py
-```
-
-**Tokens d'accès**
-
-Pour accéder aux données des API GitHub, vous pouvez avoir besoin de tokens d'accès pour respecter les limites de taux et garantir un accès continu. Vous pouvez le récupérer directement sur [Github](https://github.com/settings/tokens) et configurer les tokens d'accès dans les appels d'API au besoin.
-
-
-
-## Affichage des Informations
-
-Par exemple pour afficher les informations de tous les projets qui sont sur  GitHub, utilisez la requête SQL suivante :
-
-```sql
-SELECT Project.*, Github.*
-FROM Project
-JOIN Project_Github ON Project.Project_Id = Project_Github.Project_Id
-JOIN Github ON Project_Github.Github_Id = Github.Github_Id;
-```
-
-Cette requête effectue une jointure entre les tables Project, Project_Github et Github pour récupérer toutes les informations des projets présents sur GitHub.
+Merci à Monsieur SCUTURICI Vasile-Marian pour son soutien et son aide précieuse tout au long du développement de ce projet.
